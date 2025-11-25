@@ -13,7 +13,17 @@ public class Mft
     private readonly Dictionary<string, DirectoryNameMapValue> _directoryNameMap;
     private readonly Dictionary<string, HashSet<ParentMapEntry>> _parentDirectoryNameMap;
 
-    public Mft(Stream fileStream, bool recoverFromSlack)
+    public Mft(Stream fileStream, bool recoverFromSlack) : this(fileStream, recoverFromSlack, null)
+    {
+    }
+
+    /// <summary>
+    /// Create a new MFT parser with optional attribute filtering.
+    /// </summary>
+    /// <param name="fileStream">Stream containing MFT data</param>
+    /// <param name="recoverFromSlack">Whether to recover entries from slack space</param>
+    /// <param name="attributesToParse">Optional set of attribute types to parse. If null, all attributes are parsed.</param>
+    public Mft(Stream fileStream, bool recoverFromSlack, HashSet<AttributeType> attributesToParse)
     {
         FileRecords = new Dictionary<string, FileRecord>();
         FreeFileRecords = new Dictionary<string, FileRecord>();
@@ -56,7 +66,7 @@ public class Mft
 
             CurrentOffset = index;
 
-            var f = new FileRecord(fileBytes, index,recoverFromSlack);
+            var f = new FileRecord(fileBytes, index, recoverFromSlack, attributesToParse);
 
             var key = f.GetKey();
 
