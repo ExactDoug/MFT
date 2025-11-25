@@ -27,6 +27,18 @@ public class FileRecord
     private const int FileSig = 0x454c4946;
 
     public FileRecord(byte[] rawBytes, int offset, bool recoverFromSlack)
+        : this(rawBytes, offset, recoverFromSlack, null)
+    {
+    }
+
+    /// <summary>
+    /// Create a FileRecord with optional attribute filtering for performance optimization.
+    /// </summary>
+    /// <param name="rawBytes">Raw bytes of the FILE record</param>
+    /// <param name="offset">Offset of the record in the MFT</param>
+    /// <param name="recoverFromSlack">Whether to recover entries from slack space</param>
+    /// <param name="attributesToParse">Optional set of attribute types to parse. If null, all attributes are parsed.</param>
+    public FileRecord(byte[] rawBytes, int offset, bool recoverFromSlack, HashSet<AttributeType> attributesToParse)
     {
         Offset = offset;
 
@@ -138,6 +150,14 @@ public class FileRecord
             Log.Verbose(
                 "ActualRecordSize: 0x{ActualRecordSize:X}, size: 0x{AttrSize:X}, index: 0x{Index:X}", ActualRecordSize,
                 attrSize, index);
+
+            // Skip parsing this attribute if it's not in our filter set
+            if (attributesToParse != null && !attributesToParse.Contains(attrType))
+            {
+                Log.Verbose("Skipping attribute type {AttrType} - not in filter set", attrType.ToString());
+                index += attrSize;
+                continue;
+            }
 
             var rawAttr = new byte[attrSize];
             Buffer.BlockCopy(rawBytes, index, rawAttr, 0, attrSize);
