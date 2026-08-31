@@ -23,7 +23,8 @@ public class FixupData
     }
 
     /// <summary>
-    ///     the data expected at the end of each 512 byte chunk
+    ///     the data expected at the end of each sector-sized chunk (512 bytes on a conventional
+    ///     volume, 4096 on a 4Kn volume). <see cref="FixupActual" />.Count is the sector count.
     /// </summary>
     public short FixupExpected { get; }
 
