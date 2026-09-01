@@ -81,7 +81,17 @@ public class FileRecord
         FixupOk = true;
 
         //fixup verification
-        var counter = 512;
+        //
+        // The update sequence array holds one entry per SECTOR, so the stride is the sector size,
+        // not a constant. Derive it from the record itself rather than assuming 512: the record is
+        // rawBytes.Length bytes (read as AllocatedRecordSize from offset 0x1c) and FixupActual holds
+        // one entry per sector, so stride = record size / sector count. That yields 512 on a
+        // conventional 512-byte-sector volume and 4096 on a 4Kn volume, where a hardcoded 512 would
+        // silently patch the wrong offsets.
+        var sectorCount = FixupData.FixupActual.Count;
+        var fixupStride = sectorCount > 0 ? rawBytes.Length / sectorCount : 512;
+
+        var counter = fixupStride;
         foreach (var bytese in FixupData.FixupActual)
         {
             //adjust the offset to where we need to check
@@ -99,7 +109,7 @@ public class FileRecord
             //replace fixup expected with actual bytes. bytese has actual replacement values in it.
             Buffer.BlockCopy(bytese, 0, rawBytes, fixupOffset, 2);
 
-            counter += 512;
+            counter += fixupStride;
         }
 
         LogSequenceNumber = BitConverter.ToInt64(rawBytes, 0x8);
